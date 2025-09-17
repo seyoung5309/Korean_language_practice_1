@@ -399,14 +399,35 @@ with tab2:
                     st.info("약한 상관관계")
             
             with col2:
-                # 산점도
-                fig_scatter = px.scatter(
-                    x=temp_common,
-                    y=antarctic_common,
-                    title=f"기온 vs 빙하 질량 상관관계 (r={correlation:.3f})",
-                    labels={'x': '기온 상승폭 (°C)', 'y': '빙하 질량 변화 (× 10¹² kg)'},
-                    trendline="ols"
-                )
+                # 산점도 (수동 추세선)
+                try:
+                    fig_scatter = px.scatter(
+                        x=temp_common,
+                        y=antarctic_common,
+                        title=f"기온 vs 빙하 질량 상관관계 (r={correlation:.3f})",
+                        labels={'x': '기온 상승폭 (°C)', 'y': '빙하 질량 변화 (× 10¹² kg)'},
+                        trendline="ols"
+                    )
+                except ImportError:
+                    # statsmodels 없을 경우 수동으로 추세선 생성
+                    fig_scatter = px.scatter(
+                        x=temp_common,
+                        y=antarctic_common,
+                        title=f"기온 vs 빙하 질량 상관관계 (r={correlation:.3f})",
+                        labels={'x': '기온 상승폭 (°C)', 'y': '빙하 질량 변화 (× 10¹² kg)'}
+                    )
+                    # numpy로 선형 회귀선 추가
+                    z = np.polyfit(temp_common, antarctic_common, 1)
+                    p = np.poly1d(z)
+                    x_trend = np.linspace(min(temp_common), max(temp_common), 100)
+                    fig_scatter.add_scatter(
+                        x=x_trend, 
+                        y=p(x_trend),
+                        mode='lines',
+                        name=f'추세선 (y={z[0]:.1f}x+{z[1]:.1f})',
+                        line=dict(color='red', dash='dash')
+                    )
+                
                 fig_scatter.update_layout(height=300)
                 st.plotly_chart(fig_scatter, use_container_width=True)
     
