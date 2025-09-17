@@ -593,8 +593,8 @@ st.markdown("---")
 st.markdown("""
 ### 📖 데이터 출처
 - **공식 해수면 데이터**: NASA/NOAA Sea Level Change Portal
-- **남극 빙하 데이터**: 사용자 제공 이미지 기반 재구성
-- **지구 기온 데이터**: 사용자 제공 이미지 기반 재구성
+- **남극 빙하 데이터**: 논문 : Mass balance of the Antarctic Ice Sheet from 1992 to 2017 (IMBIE, Shepherd et al., Nature, 2018)
+- **지구 기온 데이터**: 코페르니쿠스 기후 변화 연구소(C3S) (유럽연합(EU) 산하 기후변화 감시 기구) 
 
 ### 🔬 분석 방법
 - **해수면 상승**: 위성 고도계 측정 데이터
