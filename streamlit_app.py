@@ -177,32 +177,115 @@ with tab1:
     # 지역별 해수면 상승 분석
     st.subheader("🗺️ 주요 지역별 해수면 상승률")
     
+    # 지역별 데이터 (위도, 경도 포함)
     regions_data = {
-        '서태평양': 3.8,
-        '대서양': 3.2,
-        '인도양': 3.5,
-        '북극해': 4.1,
-        '지중해': 2.9,
-        '태평양 (동부)': 2.8
+        '지역': ['서태평양', '대서양', '인도양', '북극해', '지중해', '동태평양'],
+        '상승률_mm_per_year': [3.8, 3.2, 3.5, 4.1, 2.9, 2.8],
+        '위도': [15, 30, -10, 75, 35, 0],
+        '경도': [140, -30, 80, 0, 15, -120],
+        '설명': [
+            '서태평양: 태풍과 온난화의 복합 영향',
+            '대서양: 멕시코만류 변화로 인한 상승',
+            '인도양: 계절풍과 해수온 상승',
+            '북극해: 빙하 융해로 급속한 상승',
+            '지중해: 상대적으로 낮은 상승률',
+            '동태평양: 엘니뇨 현상의 영향'
+        ]
     }
     
-    regions_df = pd.DataFrame(list(regions_data.items()), columns=['지역', '상승률_mm_per_year'])
+    regions_df = pd.DataFrame(regions_data)
     
-    fig_regions = px.bar(
-        regions_df,
-        x='지역',
-        y='상승률_mm_per_year',
-        title='지역별 연평균 해수면 상승률 (mm/년)',
-        color='상승률_mm_per_year',
-        color_continuous_scale='Blues'
+    # 지도 시각화 (산점도 방식)
+    fig_map = go.Figure()
+    
+    # 색상 스케일 정의
+    colors = ['#ffffcc', '#c7e9b4', '#7fcdbb', '#41b6c4', '#2c7fb8', '#253494']
+    
+    fig_map.add_trace(go.Scattergeo(
+        lon=regions_df['경도'],
+        lat=regions_df['위도'],
+        text=regions_df['지역'],
+        mode='markers+text',
+        marker=dict(
+            size=regions_df['상승률_mm_per_year'] * 8,  # 크기로 상승률 표현
+            color=regions_df['상승률_mm_per_year'],
+            colorscale='Blues',
+            colorbar=dict(
+                title="해수면 상승률<br>(mm/년)",
+                titleside="right"
+            ),
+            line=dict(width=2, color='darkblue'),
+            sizemode='diameter'
+        ),
+        textposition="top center",
+        hovertemplate='<b>%{text}</b><br>' +
+                     '상승률: %{marker.color:.1f} mm/년<br>' +
+                     '<extra></extra>',
+        customdata=regions_df['설명']
+    ))
+    
+    fig_map.update_layout(
+        title='전 세계 주요 해역별 해수면 상승률 (mm/년)',
+        geo=dict(
+            projection_type='natural earth',
+            showland=True,
+            landcolor='lightgray',
+            showocean=True,
+            oceancolor='lightblue',
+            showlakes=True,
+            lakecolor='lightblue'
+        ),
+        height=500,
+        margin=dict(l=0, r=0, t=50, b=0)
     )
     
-    fig_regions.update_layout(
-        height=400,
-        template='plotly_white'
-    )
+    st.plotly_chart(fig_map, use_container_width=True)
     
-    st.plotly_chart(fig_regions, use_container_width=True)
+    # 상세 데이터 테이블
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.markdown("### 📊 지역별 상승률 순위")
+        sorted_df = regions_df.sort_values('상승률_mm_per_year', ascending=False)
+        
+        for idx, row in sorted_df.iterrows():
+            if row['상승률_mm_per_year'] >= 4.0:
+                st.error(f"🔴 **{row['지역']}**: {row['상승률_mm_per_year']}mm/년 (고위험)")
+            elif row['상승률_mm_per_year'] >= 3.5:
+                st.warning(f"🟡 **{row['지역']}**: {row['상승률_mm_per_year']}mm/년 (중위험)")
+            else:
+                st.info(f"🔵 **{row['지역']}**: {row['상승률_mm_per_year']}mm/년 (상대적 안전)")
+    
+    with col2:
+        # 히트맵 스타일 차트
+        fig_heatmap = go.Figure(data=go.Heatmap(
+            x=['해수면 상승률'],
+            y=regions_df['지역'],
+            z=[[val] for val in regions_df['상승률_mm_per_year']],
+            colorscale='Blues',
+            text=[[f"{val} mm/년"] for val in regions_df['상승률_mm_per_year']],
+            texttemplate="%{text}",
+            textfont={"size": 12},
+            hoverongaps=False
+        ))
+        
+        fig_heatmap.update_layout(
+            title='지역별 상승률 히트맵',
+            height=400,
+            yaxis=dict(tickmode='linear'),
+            xaxis=dict(side='top')
+        )
+        
+        st.plotly_chart(fig_heatmap, use_container_width=True)
+    
+    # 지역별 특성 설명
+    st.markdown("### 🌊 지역별 해수면 상승 특성")
+    
+    with st.expander("지역별 상세 분석 보기"):
+        for idx, row in regions_df.iterrows():
+            st.write(f"**{row['지역']}** ({row['상승률_mm_per_year']}mm/년)")
+            st.write(f"- {row['설명']}")
+            st.write("")
     
     # 해수면 상승 원인 분석
     st.subheader("📈 해수면 상승 주요 원인")
